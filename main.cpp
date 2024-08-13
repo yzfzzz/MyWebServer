@@ -16,8 +16,8 @@
 #define MAX_EVENT_NUMBER 10000 // 监听的最大事件数
 
 /* 
-    函数指针的声明: int (*pfun)(int,int); //声明一个函数指针 pfun,参数列表为 int,int
-    void(handler)(int) 声明了一个名为 handler 的函数指针，它指向一个接受一个 int 参数并返回 void（即不返回任何值）的函数
+    函数指针的声明: 类型说明符 (*函数名) (参数)
+    void(handler)(int) 声明了一个名为 handler 的函数指针，它指向一个接受一个 int 参数并返回 void 的函数
 */
 void addsig(int sig, void(handler)(int))
 {
@@ -29,7 +29,6 @@ void addsig(int sig, void(handler)(int))
     sa.sa_handler = handler;
     // 设置临时阻塞信号集
     sigfillset(&sa.sa_mask);
-
     assert(sigaction(sig, &sa, NULL) != -1);
 }
 
@@ -42,10 +41,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // 端口号string -> int
+    // 端口号 string -> int
     int port = atoi(argv[1]);
     // 如果向一个没有读端的管道写数据，不用终止进程
-    addsig(SIGPIPE, SIG_IGN);   // SIG_IGN: 忽略信号
+    addsig(SIGPIPE, SIG_IGN);   // SIG_IGN: 忽略信号，这里指的是忽略信号 ·  SIGPIPE
 
     // 定义一个线程池指针
     threadpool<http_conn>* pool = NULL;
@@ -59,7 +58,8 @@ int main(int argc, char* argv[])
     }
     // 开辟一块连续的http_conn数组，保存所有正在连接的客户端信息
     http_conn* users = new http_conn[MAX_FD];
-    // 监听
+
+    // 设置监听
     int listenfd = socket(AF_INET, SOCK_STREAM, 0);
     int ret = 0;
     struct sockaddr_in address;
@@ -70,12 +70,16 @@ int main(int argc, char* argv[])
     // 设置端口复用
     int reuse = 1;
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
+    // 绑定
     ret = bind(listenfd, (struct sockaddr*)&address, sizeof(address));
     if(ret == -1)
     {
         perror("bind");
         exit(-1);
     }
+
+    // 开始监听
     ret = listen(listenfd, 5);
     if(ret == -1)
     {
@@ -83,13 +87,15 @@ int main(int argc, char* argv[])
         exit(-1);
     }
     
-    // 添加到epoll模型中
+    // 将listend添加到epoll模型中
     epoll_event events[MAX_EVENT_NUMBER];
     int epollfd = epoll_create(5);
     addfd(epollfd, listenfd, false);
     http_conn::m_epollfd = epollfd;
+
     while(1)
     {
+        // epoll轮询，等待有数据发送
         int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER,-1);
         if((number < 0) && (errno != EINTR))
         {
@@ -99,6 +105,7 @@ int main(int argc, char* argv[])
         for(int i = 0; i < number; i++)
         {
             int sockfd = events[i].data.fd;
+            // 有新的客户端连接
             if(sockfd == listenfd)
             {
                 struct sockaddr_in client_address;
@@ -124,7 +131,7 @@ int main(int argc, char* argv[])
             {
                 users[sockfd].close_conn();
             }
-            // 有读事件发生
+            // 有读事件发生（可读）
             else if(events[i].events & EPOLLIN)
             {
                 // 有读事件发生
@@ -139,6 +146,7 @@ int main(int argc, char* argv[])
                     users[sockfd].close_conn();
                 }
             }
+            // 有写事件发生（可写）
             else if(events[i].events & EPOLLOUT)
             {
                 if(!users[sockfd].write())
@@ -147,7 +155,6 @@ int main(int argc, char* argv[])
                 }
             }
         }
-
     }
 
     close(epollfd);

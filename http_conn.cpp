@@ -22,6 +22,7 @@ int setnonblocking(int fd)
     return old_option;
 }
 
+// 将客户端的socket_fd加入到epoll_fd中
 void addfd(int epollfd, int fd, bool one_shot)
 {
     epoll_event event;
@@ -31,7 +32,7 @@ void addfd(int epollfd, int fd, bool one_shot)
 
     // 设为边沿触发
     event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-
+    // 设置该fd只能接受一次数据，再想接收需要调用modfd()函数
     if(one_shot)
     {
         event.events |= EPOLLONESHOT;
@@ -46,12 +47,14 @@ int http_conn::m_epollfd = -1;
 // 所有的客户数
 int http_conn::m_user_count = 0;
 
+// 将客户端的socket_fd从epoll_fd中移除
 void removefd(int epollfd, int fd)
 {
     epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
     close(fd);
 }
 
+// 设置该fd只能接受一次数据，再想接收需要调用modfd()函数
 void modfd(int epollfd, int fd, int ev)
 {
     epoll_event event;
@@ -60,12 +63,13 @@ void modfd(int epollfd, int fd, int ev)
     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
 }
 
+// http_conn类的初始化, 实际上是客户端socket_fd的初始化
 void http_conn::init(int sockfd, const sockaddr_in& addr)
 {
     m_sockfd = sockfd;
     // 一个常量可以赋值给一个变量
     m_address = addr;
-
+    // 设置端口复用
     int reuse = 1;
     setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
     addfd(m_epollfd, sockfd, true);
@@ -73,13 +77,14 @@ void http_conn::init(int sockfd, const sockaddr_in& addr)
     init();
 }
 
+// http_conn类各个成员变量的初始化
 void http_conn::init()
 {
     bytes_to_send = 0;
     bytes_have_send = 0;
-    m_check_state = CHECK_STATE_REQUESTLINE; // 初始状态为检查请求行
-    m_linger = false; // 默认不保持链接 Connection : keep-alive保持连接
-    m_method = GET; // 默认请求方式为GET
+    m_check_state = CHECK_STATE_REQUESTLINE;    // 初始状态为检查请求行
+    m_linger = false;                           // 默认不保持链接 Connection : keep-alive保持连接
+    m_method = GET;                             // 默认请求方式为GET
     m_url = 0;
     m_version = 0;
     m_content_length = 0;
@@ -88,7 +93,7 @@ void http_conn::init()
     m_checked_idx = 0;
     m_read_idx = 0;
     m_write_idx = 0;
-    // !内存地址的计算
+    // !内存地址的计算: 成员变量的存储时连续的吗
     bzero(m_read_buf, READ_BUFFER_SIZE);
     bzero(m_write_buf, WRITE_BUFFER_SIZE);
     bzero(m_real_file, FILENAME_LEN);
@@ -185,7 +190,7 @@ bool http_conn::write()
             m_iv[1].iov_base = m_file_address +(bytes_have_send-m_write_idx);
             m_iv[1].iov_len = bytes_to_send;
         }
-        // 发完m_iv[0]的部分数据
+        // 发完m_iv[0]的部分数据，还有一部分没发
         else
         {
             m_iv[0].iov_base = m_write_buf + bytes_have_send;
@@ -211,7 +216,7 @@ bool http_conn::write()
     }
 }
 
-// 预处理, 解析出一行一行, 判断依据 \r\n
+// 预处理, 解析出一行一行, 判断依据: \r\n
 http_conn::LINE_STATUS http_conn::parse_line()
 {
     char temp;
@@ -251,15 +256,14 @@ http_conn::LINE_STATUS http_conn::parse_line()
 // 对请求行进行处理, 获取请求方法、目标URL、HTTP版本号
 http_conn::HTTP_CODE http_conn::parse_request_line(char* text)
 {
-    // GET /index.html HTTP/1.1
-    //! \t前面有一个空格
-    m_url = strpbrk(text, " \t");    // 找出第一个 " \t"在text出现的位置
+    // 需要解析的请求行内容: GET /index.html HTTP/1.1
+    m_url = strpbrk(text, " ");    // 找出第一个 " "在text出现的位置
     if(!m_url)
     {
         return BAD_REQUEST;
     }
     *m_url++ = '\0';    // m_url 当前指向的地址被解引用（*m_url），然后将这个位置的字符设置为 '\0'。然后，将 m_url 自增，使其指向下一个字符的位置。
-    // GET\0/index.html HTTP/1.1
+    // 当前请求行内容: GET\0/index.html HTTP/1.1
     char* method = text;
     if(strcasecmp(method, "GET") == 0)
     {
@@ -272,7 +276,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char* text)
     }
 
     // 此时m_url经过++后，指向 /index.html HTTP/1.1
-    m_version = strpbrk(m_url, " \t");
+    m_version = strpbrk(m_url, " ");
     if(!m_version)
     {
         return BAD_REQUEST;
@@ -321,7 +325,7 @@ http_conn::HTTP_CODE http_conn::parse_headers(char* text)
     {
         // 处理Connection字段 Connection: keep-alive
         text += 11;
-        text += strspn(text, " \t");  // 返回text字符串中，前缀部分(\t)的长度
+        text += strspn(text, " ");  // 返回text字符串中，前缀部分(' ')的长度
         if(strcasecmp(text, "keep-alive") == 0)
         {
             m_linger = true;
@@ -331,19 +335,19 @@ http_conn::HTTP_CODE http_conn::parse_headers(char* text)
     {
         // 处理Content-Length头部字段
         text +=15;
-        text += strspn(text, " \t");
+        text += strspn(text, " ");
         m_content_length = atoi(text);
     }
     else if(strncasecmp(text, "HOST:", 5) == 0)
     {
         // 处理HOST头部字段
         text += 5;
-        text += strspn(text, " \t");
+        text += strspn(text, " ");
         m_host = text;
     }
     else
     {
-        // printf("oop! unknow header %s\n", text);
+        printf("oop! unknow header %s\n", text);
     }
     return NO_REQUEST;
 }

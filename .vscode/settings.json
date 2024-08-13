@@ -8,6 +8,9 @@
         "type_traits": "cpp",
         "*.tcc": "cpp",
         "memory_resource": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "string": "cpp",
+        "istream": "cpp",
+        "streambuf": "cpp"
     }
 }
