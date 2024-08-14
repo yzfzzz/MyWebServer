@@ -397,7 +397,7 @@ http_conn::HTTP_CODE http_conn::do_request()
 
     // 以只读的方式打开文件
     int fd = open(m_real_file, O_RDONLY);
-    // !创建内存映射
+    // 创建内存映射, 将磁盘文件的数据映射到内存，用户通过修改内存就能修改磁盘文件
     m_file_address = (char*)mmap(0, m_file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     close(fd);
     return FILE_REQUEST;
@@ -500,6 +500,7 @@ http_conn::HTTP_CODE http_conn::process_read()
 
 // !!! 往写缓冲区中发送数据
 // 函数声明中的`...`（称为可变参数列表或省略号）表示该函数可以接受一个不确定数量的参数，这些参数的类型和数量在编译时是不确定的
+// format 表示字符串的格式
 bool http_conn::add_response(const char* format, ...)
 {
     if(m_write_idx >= WRITE_BUFFER_SIZE)
@@ -508,6 +509,7 @@ bool http_conn::add_response(const char* format, ...)
     }
     va_list arg_list;  // 可变参数列表类型
     va_start(arg_list, format);  // 设置了 arg_list 变量，使其指向 format 参数之后的位置
+    // 使用vsnprintf()用于向一个字符串缓冲区打印格式化字符串
     int len = vsnprintf(m_write_buf+m_write_idx, WRITE_BUFFER_SIZE-1-m_write_idx, format, arg_list);
     if(len >= (WRITE_BUFFER_SIZE-1-m_write_idx))
     {
