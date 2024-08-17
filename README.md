@@ -13,3 +13,5 @@ Linux高并发服务器项目，参考了[TinyWebServer](https://github.com/qing
 [4.主线程的具体实现](https://blog.csdn.net/henghuizan2771/article/details/141141660?spm=1001.2014.3001.5501)
 
 [5.HTTP报文的解析与响应](https://blog.csdn.net/henghuizan2771/article/details/141196139?spm=1001.2014.3001.5501)
+
+[6.定时器处理非活动连接](https://blog.csdn.net/henghuizan2771/article/details/141283990?spm=1001.2014.3001.5501)

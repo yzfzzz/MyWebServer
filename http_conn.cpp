@@ -83,7 +83,7 @@ void http_conn::init()
     bytes_to_send = 0;
     bytes_have_send = 0;
     m_check_state = CHECK_STATE_REQUESTLINE;    // 初始状态为检查请求行
-    m_linger = false;                           // 默认不保持链接 Connection : keep-alive保持连接
+    m_linger = true;                           // 默认不保持链接 Connection : keep-alive保持连接
     m_method = GET;                             // 默认请求方式为GET
     m_url = 0;
     m_version = 0;
@@ -202,16 +202,17 @@ bool http_conn::write()
             // 没有数据要发送了
             unmap();
             modfd(m_epollfd, m_sockfd, EPOLLIN);
-
-            if(m_linger)
-            {
-                init();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            init();
+            return true;
+            // if(m_linger)
+            // {
+            //     init();
+            //     return true;
+            // }
+            // else
+            // {
+            //     return false;
+            // }
         }
     }
 }
@@ -347,7 +348,7 @@ http_conn::HTTP_CODE http_conn::parse_headers(char* text)
     }
     else
     {
-        printf("oop! unknow header %s\n", text);
+        // printf("oop! unknow header %s\n", text);
     }
     return NO_REQUEST;
 }
