@@ -1,19 +1,16 @@
 #pragma once
-
 #include <stdio.h>
 #include <time.h>
 #include <arpa/inet.h>
-#include "http_conn.h"
 #define BUFFER_SIZE 64
-extern int setnonblocking(int fd);
-extern void addfd(int epollfd, int fd, bool one_shot);
-extern void removefd(int epollfd, int fd);
 
-class http_conn;
-
-// pipefd[0] 对应的是管道的读端
-// pipefd[1] 对应的是管道的写端
-extern int pipefd[2];
+class util_timer;
+struct client_data
+{
+    sockaddr_in address;
+    int sockfd;
+    util_timer *timer;
+};
 
 // 定时器类
 class util_timer{
@@ -23,8 +20,8 @@ public:
 
 public:
     time_t expire; // 任务超时时间，这里是使用绝对时间
-    void (*cb_func)(http_conn*, int*);  // 任务回调函数， 回调函数处理的客户数据，由定时器的执行者传递给回调函数
-    http_conn* user_data;
+    void (*cb_func)(client_data*);  // 任务回调函数， 回调函数处理的客户数据，由定时器的执行者传递给回调函数
+    client_data* user_data;
     util_timer* prev;
     util_timer* next;
 };
@@ -46,10 +43,7 @@ public:
     void adjust_timer(util_timer* timer);
 
     /* SIGALARM每触发一次就在信号处理函数执行一次tick函数, 以处理链表上的到期任务 */
-    void tick(int& epollfd);
-
-    
-
+    void tick();
 
     util_timer* head;
     util_timer* tail;
@@ -85,10 +79,3 @@ private:
         }
     }
 };
-
-void lst_sig_init(int& epollfd);
-void lst_addsig(int sig);
-void lst_sig_handler(int sig);
-void cb_func(http_conn* user_data, int* p_epollfd);
-void lsttimer_init(http_conn* user_ptr, int timeslot,sort_timer_lst& timer_lst);
-void lsttimer_handler(int& epollfd, int timeslot,sort_timer_lst& timer_lst);
