@@ -12,7 +12,7 @@
 #include <cstdarg>
 #include <sys/types.h>  
 #include <sys/uio.h>
-
+#include "log.h"
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 
 class http_conn{
@@ -71,6 +71,11 @@ public:
     // ·Ç×èÈûĞ´
     bool write();
     void process();
+
+    sockaddr_in* get_address()
+    {
+        return &m_address;
+    } 
 
 private:
     void init();

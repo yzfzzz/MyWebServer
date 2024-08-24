@@ -12,9 +12,11 @@
 #include <signal.h>
 #include <assert.h>  
 #include "lst_timer.h"
+#include "log.h"
 #define MAX_FD 65536  // 最大的文件描述符
 #define MAX_EVENT_NUMBER 10000 // 监听的最大事件数
 #define TIMESLOT 5
+#define ASYNLOG
 //设置定时器相关参数
 static int pipefd[2];
 static sort_timer_lst timer_lst;
@@ -30,10 +32,12 @@ void timer_sig_handler(int sig)
 // 定时器回调函数, 从epoll上删除sockfd
 void cb_func(client_data *user_data)
 {
-    printf("close fd : %d\n", user_data->sockfd);
     epoll_ctl(epollfd, EPOLL_CTL_DEL, user_data->sockfd, 0);
     assert(&user_data);
     close(user_data->sockfd);
+
+    LOG_INFO("close fd %d", user_data->sockfd);
+    Log::get_instance()->flush();
 }
 void timer_handler()
 {
@@ -72,6 +76,9 @@ void timer_sig_init()
 
 int main(int argc, char* argv[])
 {
+#ifdef ASYNLOG
+    Log::get_instance()->init("ServerLog", 2000, 5000000, 8);
+#endif
     if(argc <= 1)
     {
         // 要求输入格式为 ./a.out 10000  其中10000是端口号 
@@ -143,7 +150,8 @@ int main(int argc, char* argv[])
         int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER,-1);
         if((number < 0) && (errno != EINTR))
         {
-            printf("epoll failture\n");
+            // printf("epoll failture\n");
+            LOG_ERROR("%s", "epoll failure");
             break;
         }
         for(int i = 0; i < number; i++)
@@ -158,13 +166,15 @@ int main(int argc, char* argv[])
 
                 if(connfd < 0)
                 {
-                    printf("errno is %d\n", errno);
+                    // printf("errno is %d\n", errno);
+                    LOG_ERROR("%s:errno is:%d", "accept error", errno);
                     continue;
                 }
 
                 if(http_conn::m_user_count >= MAX_FD)
                 {
                     close(connfd);
+                    LOG_ERROR("%s", "Internal server busy");
                     continue;
                 }
                 users[connfd].init(connfd, client_address);
@@ -228,6 +238,9 @@ int main(int argc, char* argv[])
                     // 读的到数据
                     pool->append(users+sockfd);
 
+                    LOG_INFO("deal with the client(%s)", inet_ntoa(users[sockfd].get_address()->sin_addr));
+                    Log::get_instance()->flush();
+
                     //若有数据传输，则将定时器往后延迟3个单位
                     //并对新的定时器在链表上的位置进行调整
                     if (timer)
@@ -235,6 +248,9 @@ int main(int argc, char* argv[])
                         time_t cur = time(NULL);
                         timer->expire = cur + 3 * TIMESLOT;
                         timer_lst.adjust_timer(timer);
+
+                        LOG_INFO("%s", "adjust timer once");
+                        Log::get_instance()->flush();
                     }
                 }
                 else
@@ -256,10 +272,16 @@ int main(int argc, char* argv[])
                 util_timer *timer = users_timer[sockfd].timer;
                 if(users[sockfd].write())
                 {
+                    LOG_INFO("send data to the client(%s)", inet_ntoa(users[sockfd].get_address()->sin_addr));
+                    Log::get_instance()->flush();
                     if (timer)
                     {
                         time_t cur = time(NULL);
                         timer->expire = cur + 3 * TIMESLOT;
+
+                        LOG_INFO("%s", "adjust timer once");
+                        Log::get_instance()->flush();
+
                         timer_lst.adjust_timer(timer);
                     }
                 }

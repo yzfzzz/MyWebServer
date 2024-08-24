@@ -63,13 +63,16 @@ public:
     // 等待
     bool wait(pthread_mutex_t* m_mutex)
     {
-        int ret = pthread_cond_wait(&m_cond, m_mutex);
+        int ret = 0;
+        ret = pthread_cond_wait(&m_cond, m_mutex);
+        return ret == 0;
     }
 
     // 解锁
     bool timewait(pthread_cond_t m_cond, pthread_mutex_t* m_mutex, struct timespec time)
     {
-        int ret = pthread_cond_timedwait(&m_cond, m_mutex, &time);
+        int ret = 0;
+        ret = pthread_cond_timedwait(&m_cond, m_mutex, &time);
         return ret == 0;
     }
     // 唤醒一个或者多个等待的线程

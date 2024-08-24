@@ -116,7 +116,10 @@ void sort_timer_lst::tick()
     {
         return;
     }
-    printf( "Timer Tick\n" );
+    
+    LOG_INFO("%s", "timer tick");
+    Log::get_instance()->flush();
+
     time_t cur = time(NULL); // 获取当前系统的时间
     util_timer* tmp = head;
     // 从头节点依次处理每一个定时器，直到遇到一个尚未定期的定时器
