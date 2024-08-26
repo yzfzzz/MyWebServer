@@ -16,7 +16,7 @@
 #define MAX_FD 65536  // 最大的文件描述符
 #define MAX_EVENT_NUMBER 10000 // 监听的最大事件数
 #define TIMESLOT 5
-#define ASYNLOG
+
 //设置定时器相关参数
 static int pipefd[2];
 static sort_timer_lst timer_lst;
@@ -35,9 +35,11 @@ void cb_func(client_data *user_data)
     epoll_ctl(epollfd, EPOLL_CTL_DEL, user_data->sockfd, 0);
     assert(&user_data);
     close(user_data->sockfd);
-
+#ifdef ASYNLOG
     LOG_INFO("close fd %d", user_data->sockfd);
     Log::get_instance()->flush();
+#endif
+    // printf("close fd %d\n", user_data->sockfd);
 }
 void timer_handler()
 {
@@ -70,6 +72,7 @@ void timer_sig_init()
     assert(ret != -1);
     setnonblocking(pipefd[1]);
     addfd(epollfd, pipefd[0], false);
+    printf("pipefd0: %d, pipefd1: %d\n", pipefd[0], pipefd[1]);
     addsig(SIGALRM, timer_sig_handler);
     addsig(SIGTERM, timer_sig_handler);
 }
@@ -107,6 +110,7 @@ int main(int argc, char* argv[])
 
     // 设置监听
     int listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    printf("listen fd: %d\n", listenfd);
     int ret = 0;
     struct sockaddr_in address;
     address.sin_addr.s_addr = INADDR_ANY;
@@ -148,47 +152,63 @@ int main(int argc, char* argv[])
     {
         // epoll轮询，等待有数据发送
         int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER,-1);
+        // printf("epoll num: %d\n", number);
         if((number < 0) && (errno != EINTR))
         {
             // printf("epoll failture\n");
+        #ifdef ASYNLOG
             LOG_ERROR("%s", "epoll failure");
+        #endif
             break;
         }
         for(int i = 0; i < number; i++)
         {
             int sockfd = events[i].data.fd;
+            struct sockaddr_in client_address;
+            socklen_t client_addresslen = sizeof(client_address);
+            int connfd;
             // 有新的客户端连接
             if(sockfd == listenfd)
             {
-                struct sockaddr_in client_address;
-                socklen_t client_addresslen = sizeof(client_address);
-                int connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_addresslen);
 
-                if(connfd < 0)
+                while ((connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_addresslen)) > 0)
                 {
-                    // printf("errno is %d\n", errno);
-                    LOG_ERROR("%s:errno is:%d", "accept error", errno);
-                    continue;
-                }
 
-                if(http_conn::m_user_count >= MAX_FD)
-                {
-                    close(connfd);
-                    LOG_ERROR("%s", "Internal server busy");
-                    continue;
+                    // printf("connfd: %d\n", connfd);
+                #ifdef ASYNLOG
+                    LOG_INFO("connfd: %d", connfd);
+                    Log::get_instance()->flush();
+                #endif
+                    if(connfd < 0)
+                    {
+                        // printf("errno is %d\n", errno);
+                    #ifdef ASYNLOG
+                        LOG_ERROR("%s:errno is:%d", "accept error", errno);
+                    #endif
+                        continue;
+                    }
+
+                    if(http_conn::m_user_count >= MAX_FD)
+                    {
+                        close(connfd);
+                    #ifdef ASYNLOG
+                        LOG_ERROR("%s", "Internal server busy");
+                    #endif
+                        continue;
+                    }
+                    users[connfd].init(connfd, client_address);
+                    //初始化client_data数据
+                    //创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中
+                    users_timer[connfd].address = client_address;
+                    users_timer[connfd].sockfd = connfd;
+                    util_timer *timer = new util_timer;
+                    timer->user_data = &users_timer[connfd];
+                    timer->cb_func = cb_func;
+                    time_t cur = time(NULL);
+                    timer->expire = cur + 3*TIMESLOT;
+                    users_timer[connfd].timer = timer;
+                    timer_lst.add_timer(timer);
                 }
-                users[connfd].init(connfd, client_address);
-                //初始化client_data数据
-                //创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中
-                users_timer[connfd].address = client_address;
-                users_timer[connfd].sockfd = connfd;
-                util_timer *timer = new util_timer;
-                timer->user_data = &users_timer[connfd];
-                timer->cb_func = cb_func;
-                time_t cur = time(NULL);
-                timer->expire = cur + 3*TIMESLOT;
-                users_timer[connfd].timer = timer;
-                timer_lst.add_timer(timer);
             }
             else if((sockfd == pipefd[0])&&(events[i].events & EPOLLIN))
             {
@@ -237,10 +257,10 @@ int main(int argc, char* argv[])
                 {
                     // 读的到数据
                     pool->append(users+sockfd);
-
+                #ifdef ASYNLOG
                     LOG_INFO("deal with the client(%s)", inet_ntoa(users[sockfd].get_address()->sin_addr));
                     Log::get_instance()->flush();
-
+                #endif
                     //若有数据传输，则将定时器往后延迟3个单位
                     //并对新的定时器在链表上的位置进行调整
                     if (timer)
@@ -248,9 +268,10 @@ int main(int argc, char* argv[])
                         time_t cur = time(NULL);
                         timer->expire = cur + 3 * TIMESLOT;
                         timer_lst.adjust_timer(timer);
-
+                    #ifdef ASYNLOG
                         LOG_INFO("%s", "adjust timer once");
                         Log::get_instance()->flush();
+                    #endif
                     }
                 }
                 else
@@ -272,16 +293,18 @@ int main(int argc, char* argv[])
                 util_timer *timer = users_timer[sockfd].timer;
                 if(users[sockfd].write())
                 {
+                #ifdef ASYNLOG  
                     LOG_INFO("send data to the client(%s)", inet_ntoa(users[sockfd].get_address()->sin_addr));
                     Log::get_instance()->flush();
+                #endif
                     if (timer)
                     {
                         time_t cur = time(NULL);
                         timer->expire = cur + 3 * TIMESLOT;
-
+                    #ifdef ASYNLOG 
                         LOG_INFO("%s", "adjust timer once");
                         Log::get_instance()->flush();
-
+                    #endif
                         timer_lst.adjust_timer(timer);
                     }
                 }

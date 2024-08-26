@@ -116,10 +116,10 @@ void sort_timer_lst::tick()
     {
         return;
     }
-    
+#ifdef ASYNLOG
     LOG_INFO("%s", "timer tick");
     Log::get_instance()->flush();
-
+#endif
     time_t cur = time(NULL); // 获取当前系统的时间
     util_timer* tmp = head;
     // 从头节点依次处理每一个定时器，直到遇到一个尚未定期的定时器
@@ -139,6 +139,6 @@ void sort_timer_lst::tick()
         }
         delete tmp;
         tmp = head;
-        printf("close client request\n");
+        // printf("close client request\n");
     }
 }
