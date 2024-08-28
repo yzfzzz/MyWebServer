@@ -170,7 +170,6 @@ int main(int argc, char* argv[])
             // 有新的客户端连接
             if(sockfd == listenfd)
             {
-
                 while ((connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_addresslen)) > 0)
                 {
 
@@ -246,7 +245,16 @@ int main(int argc, char* argv[])
             // 若对方异常端开或错误
             else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
             {
-                users[sockfd].close_conn();
+                // users[sockfd].close_conn();
+
+                //服务器端关闭连接，移除对应的定时器
+                util_timer *timer = users_timer[sockfd].timer;
+                timer->cb_func(&users_timer[sockfd]);
+
+                if (timer)
+                {
+                    timer_lst.del_timer(timer);
+                }
             }
             // 有读事件发生（可读）
             else if(events[i].events & EPOLLIN)
@@ -276,7 +284,6 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    printf("Read Fail!\n");
                     // 读不到数据
                     timer->cb_func(&users_timer[sockfd]);
                     if (timer)
@@ -310,7 +317,6 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    printf("Write Fail!\n");
                     timer->cb_func(&users_timer[sockfd]);
                     if (timer)
                     {

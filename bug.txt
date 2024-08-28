@@ -1,3 +1,5 @@
 1. 在笔记本浏览器上建立一个客户端连接时，会产生2个connfd, 但用自己的手机或者平板登录则不会
 2. 使用webbench进行压力测试，结果很低
 3. 进行一次压测后，服务器无法连接  解决：https://www.cnblogs.com/qinguoyi/p/12355519.html
+4. fork failed.: Resource temporarily unavailable
+5. 压力测试的数据很差，Speed大约只有12000，且如果Timeslot=5, Speed=0

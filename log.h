@@ -5,7 +5,7 @@
 #include "locker.h"
 using namespace std;
 
-// #define ASYNLOG
+#define ASYNLOG
 
 class Log
 {
