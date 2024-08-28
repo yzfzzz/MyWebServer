@@ -1,0 +1,79 @@
+2024-08-28 16:36:16.014977 [debug]:  connfd: 8
+2024-08-28 16:36:16.015896 [debug]:  oop!unknow header: Accept-Encoding: gzip, deflate
+2024-08-28 16:36:16.015908 [debug]:  Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+2024-08-28 16:36:16.015914 [debug]:  oop!unknow header: Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+2024-08-28 16:36:16.015920 [debug]:  Cache-Control: max-age=0
+2024-08-28 16:36:16.015925 [debug]:  oop!unknow header: Cache-Control: max-age=0
+2024-08-28 16:36:16.015930 [debug]:  Upgrade-Insecure-Requests: 1
+2024-08-28 16:36:16.015934 [debug]:  oop!unknow header: Upgrade-Insecure-Requests: 1
+2024-08-28 16:36:16.015939 [debug]:  
+2024-08-28 16:36:16.015960 [debug]:  request:HTTP/1.1 200 OK
+
+2024-08-28 16:36:16.015969 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 353
+
+2024-08-28 16:36:16.015974 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 353
+Content-Type:text/html
+
+2024-08-28 16:36:16.015979 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 353
+Content-Type:text/html
+Connection: close
+
+2024-08-28 16:36:16.015984 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 353
+Content-Type:text/html
+Connection: close
+
+
+2024-08-28 16:36:16.015734 [debug]:  deal with the client(49.52.98.76)
+2024-08-28 16:36:16.015789 [debug]:  adjust timer once
+2024-08-28 16:36:16.015756 [debug]:  GET /index.html HTTP/1.1
+2024-08-28 16:36:16.015869 [debug]:  Host: 124.223.141.236:10000
+2024-08-28 16:36:16.015876 [debug]:  User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36 Edg/100.0.1185.29
+2024-08-28 16:36:16.015880 [debug]:  oop!unknow header: User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36 Edg/100.0.1185.29
+2024-08-28 16:36:16.015884 [debug]:  Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+2024-08-28 16:36:16.015890 [debug]:  oop!unknow header: Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+2024-08-28 16:36:16.015894 [debug]:  Accept-Encoding: gzip, deflate
+2024-08-28 16:36:16.016089 [debug]:  close fd 8
+2024-08-28 16:36:16.109351 [debug]:  connfd: 8
+2024-08-28 16:36:16.109513 [debug]:  Accept-Encoding: gzip, deflate
+2024-08-28 16:36:16.109521 [debug]:  oop!unknow header: Accept-Encoding: gzip, deflate
+2024-08-28 16:36:16.109528 [debug]:  Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+2024-08-28 16:36:16.109534 [debug]:  oop!unknow header: Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+2024-08-28 16:36:16.109540 [debug]:  Referer: http://124.223.141.236:10000/index.html
+2024-08-28 16:36:16.109547 [debug]:  oop!unknow header: Referer: http://124.223.141.236:10000/index.html
+2024-08-28 16:36:16.109553 [debug]:  
+2024-08-28 16:36:16.109572 [debug]:  request:HTTP/1.1 200 OK
+
+2024-08-28 16:36:16.109582 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 52860
+
+2024-08-28 16:36:16.109588 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 52860
+Content-Type:text/html
+
+2024-08-28 16:36:16.109595 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 52860
+Content-Type:text/html
+Connection: close
+
+2024-08-28 16:36:16.109601 [debug]:  request:HTTP/1.1 200 OK
+Content-Length: 52860
+Content-Type:text/html
+Connection: close
+
+
+2024-08-28 16:36:16.109668 [debug]:  send data to the client(49.52.98.76)
+2024-08-28 16:36:16.109676 [debug]:  adjust timer once
+2024-08-28 16:36:16.109438 [debug]:  deal with the client(49.52.98.76)
+2024-08-28 16:36:16.109451 [debug]:  adjust timer once
+2024-08-28 16:36:16.109482 [debug]:  GET /images/webserver.png HTTP/1.1
+2024-08-28 16:36:16.109489 [debug]:  Host: 124.223.141.236:10000
+2024-08-28 16:36:16.109493 [debug]:  User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36 Edg/100.0.1185.29
+2024-08-28 16:36:16.109498 [debug]:  oop!unknow header: User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36 Edg/100.0.1185.29
+2024-08-28 16:36:16.109502 [debug]:  Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+2024-08-28 16:36:16.109506 [debug]:  oop!unknow header: Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+2024-08-28 16:36:16.148022 [debug]:  send data to the client(49.52.98.76)
+2024-08-28 16:36:16.148087 [debug]:  adjust timer once
