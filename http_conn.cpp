@@ -202,9 +202,7 @@ bool http_conn::write()
             // 没有数据要发送了
             unmap();
             modfd(m_epollfd, m_sockfd, EPOLLIN);
-            // !!!!!!!!!
-            // init();
-            // return true;
+            // !写完就断开可以大大提高QPS
             if(m_linger)
             {
                 init();
